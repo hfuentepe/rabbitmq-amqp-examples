@@ -19,7 +19,7 @@ Este tutorial utiliza Maven. Para construir ejecute:
 mvn clean install
 ```
 
-o
+      o
 
 ```
 mvn package
@@ -29,7 +29,14 @@ mvn package
 
 En el primer ejemplo del tutorial contiene el tipico [Helloworld](https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp.html). en este caso se va a crear un enviador (producer) que envia un unico mensajes cuyo contenido es HelloWorld y un receptor (consumer) que recibe el mensaje y lo pinta por consola. 
 
+Para su ejecucion abrimos dos consolas y ejecutamos los siguiente:
 
+```
+# shell 1
+java -jar target/rabbitmq-amqp-examples-*.jar --spring.profiles.active=hello-world,receiver
 
+# shell 2
+java -jar target/rabbitmq-amqp-examples-*.jar --spring.profiles.active=hello-world,sender
+```
 ## Configuracion
 
