@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
  * @author hfuentepe
  *
  */
-@Profile({ "hello-world" })
+@Profile({ "tut1", "hello-world" })
 @Configuration
 public class HelloWorldConfig {
 

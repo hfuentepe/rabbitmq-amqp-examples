@@ -24,6 +24,10 @@ public class RabbitAmqpTutorialsApplication {
 			"java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=hello-world,receiver");
 		System.out
 			.println("java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=hello-world,sender");
+		System.out.println(
+			"java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=work-queues,receiver");
+		System.out
+			.println("java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=work-queues,sender");
 	    }
 	};
     }
