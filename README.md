@@ -57,6 +57,29 @@ java -jar target/rabbitmq-amqp-examples-*.jar --spring.profiles.active=work-queu
 java -jar target/rabbitmq-amqp-examples-*.jar --spring.profiles.active=work-queues,sender
 ```
 
+### Ejemplo Publish/Subscribe
+
+Este ejemplo implemente el patrón FanOut tambien conocido como "publish/subscribe" para enviar un mensaje a multiples consumidores. Basicamente los mensajes publicados se transmitiran a todos los receptores.
+
+Aunque no lo habiamos comentado hasta ahora, la idea centra del modelo de mensajeria de RabbitMQ es que el productor nunca envia directamente un mensaje a una cola. A menudo el productor ni siquiera sabe si un mensaje sera entregado a un cola, se lo entrega a una Exchange (intercambiador).l
+Un intercambiador (Exchange) es algo muy simple, recibe un mensaje del productor y se encarga de entregarlo a una/s cola/s o descartarlo. Las reglas de como realizarlo las define el tipo de intercambiador (direct, topic, headers y fanout).
+ 
+En este caso el FanOut lo que hace es entregar el mensaje a todas las colas que conoce. En este caso de definen 2 colas de tipo AutoDelete o Anonimas y dos Bindings o enlaces para vincular estas colas al Exchange.
+ 
+Indicar que en los tutoriales anteriores si utilizabamos Exchange aunque no haciamos ninguna referencia a los mismo. Esto es debido a que existe un intercambiador por defecto que se identifica con la cadena vacia.
+ 
+Como se puede observar utilizamos un tipo de cola llamado AnonymousQueue, estas colas son colas no durareras, exclusivas y con un nombre autogenerado. Esto que significa? En primer lugar no permite tener una cola nueva y vacia cada vez que nos conectamos a RabbitMQ y cada vez que nos desconectamos se elimina automaticamente.
+ 
+Los Bindings definen la relacion entre un Exchange y una Cola, podriamos definirlo como un enlace, en este caso tenemos dos colas y dos bindings asociados al Exchange.
+ Por otro lado indicar que los Exchange Fanout ignoran el valor de routingKey aunque nosotros lo enviemos. Indicar que si el Exchange no tiene asociadas colas los mensajes se perderan.
+ 
+```
+# shell 1
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=pub-sub,receiver --tutorial.client.duration=60000
+
+# shell 2
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=pub-sub,sender --tutorial.client.duration=60000
+```
 
 
 
@@ -100,7 +123,7 @@ Spring-AMQP establece por defecto valores que establecen la durabilidad de los m
 
 [Nota]
 
-Marcar mensajes como persistentes no garantiza plenamente que un mensaje no se perderá. Aunque se dice a RabbitMQ que guarde el mensaje en el disco, todavía existe una pequeña ventana de tiempo, en la cual RabbitMQ aceptada un mensaje pero no lo ha guardado. Además, RabbitMQ no hace fsync (2) para cada mensaje, puede guardarlo en caché y no escribirlo realmente en el disco. Las garantías de persistencia no son fuertes, pero estos ejemplos es suficiente. Si necesita una garantía más sólida, puede usar (Publisher Confirms)[https://www.rabbitmq.com/confirms.html].
+Marcar mensajes como persistentes no garantiza plenamente que un mensaje no se perderá. Aunque se dice a RabbitMQ que guarde el mensaje en el disco, todavía existe una pequeña ventana de tiempo, en la cual RabbitMQ aceptada un mensaje pero no lo ha guardado. Además, RabbitMQ no hace fsync (2) para cada mensaje, puede guardarlo en caché y no escribirlo realmente en el disco. Las garantías de persistencia no son fuertes, pero estos ejemplos es suficiente. Si necesita una garantía más sólida, puede usar [Publisher Confirms](https://www.rabbitmq.com/confirms.html).
 
 ### Fair Disptch vs. Round-robin dispatching
 

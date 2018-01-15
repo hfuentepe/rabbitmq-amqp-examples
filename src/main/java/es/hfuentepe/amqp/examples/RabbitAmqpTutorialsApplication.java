@@ -28,6 +28,11 @@ public class RabbitAmqpTutorialsApplication {
 			"java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=work-queues,receiver");
 		System.out
 			.println("java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=work-queues,sender");
+
+		System.out.println(
+			"java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=pub-sub,receiver --tutorial.client.duration=60000");
+		System.out.println(
+			"java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=pub-sub,sender --tutorial.client.duration=60000");
 	    }
 	};
     }
