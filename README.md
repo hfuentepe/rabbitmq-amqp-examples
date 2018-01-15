@@ -62,7 +62,8 @@ java -jar target/rabbitmq-amqp-examples-*.jar --spring.profiles.active=work-queu
 Este ejemplo implemente el patrón FanOut tambien conocido como "publish/subscribe" para enviar un mensaje a multiples consumidores. Basicamente los mensajes publicados se transmitiran a todos los receptores.
 
 Aunque no lo habiamos comentado hasta ahora, la idea centra del modelo de mensajeria de RabbitMQ es que el productor nunca envia directamente un mensaje a una cola. A menudo el productor ni siquiera sabe si un mensaje sera entregado a un cola, se lo entrega a una Exchange (intercambiador).l
-Un intercambiador (Exchange) es algo muy simple, recibe un mensaje del productor y se encarga de entregarlo a una/s cola/s o descartarlo. Las reglas de como realizarlo las define el tipo de intercambiador (direct, topic, headers y fanout).
+
+Un intercambiador (Exchange) es algo muy simple, recibe un mensaje del productor y se encarga de entregarlo a una/s cola/s o descartarlo. Las reglas de como realizarlo las define el tipo de intercambiador (direct, topic, headers y fanout).
  
 En este caso el FanOut lo que hace es entregar el mensaje a todas las colas que conoce. En este caso de definen 2 colas de tipo AutoDelete o Anonimas y dos Bindings o enlaces para vincular estas colas al Exchange.
  
@@ -71,7 +72,10 @@ Indicar que en los tutoriales anteriores si utilizabamos Exchange aunque no haci
 Como se puede observar utilizamos un tipo de cola llamado AnonymousQueue, estas colas son colas no durareras, exclusivas y con un nombre autogenerado. Esto que significa? En primer lugar no permite tener una cola nueva y vacia cada vez que nos conectamos a RabbitMQ y cada vez que nos desconectamos se elimina automaticamente.
  
 Los Bindings definen la relacion entre un Exchange y una Cola, podriamos definirlo como un enlace, en este caso tenemos dos colas y dos bindings asociados al Exchange.
- Por otro lado indicar que los Exchange Fanout ignoran el valor de routingKey aunque nosotros lo enviemos. Indicar que si el Exchange no tiene asociadas colas los mensajes se perderan.
+ 
+Por otro lado indicar que los Exchange Fanout ignoran el valor de routingKey aunque nosotros lo enviemos. Indicar que si el Exchange no tiene asociadas colas los mensajes se perderan.
+
+Para su ejecucion abrimos dos consolas y ejecutamos los siguiente:
  
 ```
 # shell 1
@@ -81,12 +85,32 @@ java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=pub-sub,receiver
 java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=pub-sub,sender --tutorial.client.duration=60000
 ```
 
+### Ejemplo Routing
+
+Este ejemplo muestra como enrutar mensajes entre colas mediante la utilización de los Exchanges de tipo Direct.
+  
+Como vimos en el ejemplo anterior un Binding es la relaciones entre un Exchange y una cola. Tambien nombramos el parametro routingKey y que cada tipo de Exchange lo utiliza de diferentes manera (FanOut lo ignora).
+  
+En este caso utilizamos un Exchange de tipo Direct. Su algoritmo de enrutamiento es muy sencillo, un mensaje va a a las colas cuya clave de enlace (bindingKey) coincide exactamente con la routingKey del mensaje.
+  
+En el ejemplo se vinculan varias colas a la misma binding Key. En este caso tanto  autoDeleteQueue1 y autoDeleteQueue2 recibiran los mensajes cuya routingKey sea black, además de otras. Q1 --> orange y black, Q1 --> green y black.
+ 
+¿Donde nos podria ser util? Es posible es posible que queramos gestionar los logs de aplicacion y escribirlos en un fichero, pero escribir en disco los errores críticos y no perder espacio de disco con mensajes de WARNING o INFO, o que envie un notificación en caso de CRITICAL, ...
+
+En cuanto al Productor lo más interesenta es como establecer la Routing Key con la template que proporciona Spring: template.convertAndSend(exchange, routingKey, mensaje).
+
+Para su ejecucion abrimos dos consolas y ejecutamos los siguiente:
+
+```
+# shell 1
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=routing,receiver --tutorial.client.duration=60000
+
+# shell 2
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=routing,sender --tutorial.client.duration=60000
+```
 
 
 ## Configuracion
-
-
-
 
 
 ### Reconocimiento de Mensajes (Message acknowledgment)

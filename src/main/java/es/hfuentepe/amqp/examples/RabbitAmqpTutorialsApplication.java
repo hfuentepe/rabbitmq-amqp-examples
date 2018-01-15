@@ -33,6 +33,10 @@ public class RabbitAmqpTutorialsApplication {
 			"java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=pub-sub,receiver --tutorial.client.duration=60000");
 		System.out.println(
 			"java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=pub-sub,sender --tutorial.client.duration=60000");
+		System.out.println(
+			"java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=routing,receiver --tutorial.client.duration=60000");
+		System.out.println(
+			"java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=routing,sender --tutorial.client.duration=60000");
 	    }
 	};
     }
