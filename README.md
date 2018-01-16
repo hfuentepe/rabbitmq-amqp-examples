@@ -27,7 +27,7 @@ mvn package
 
 ### Ejemplo HelloWorld
 
-En el primer ejemplo del tutorial contiene el tipico [Helloworld](https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp.html). en este caso se va a crear un enviador (producer) que envia un unico mensajes cuyo contenido es HelloWorld y un receptor (consumer) que recibe el mensaje y lo pinta por consola. 
+En el primer ejemplo del tutorial contiene el tipico [Helloworld](https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp.html). en este caso se va a crear un enviador (producer) que envia un unico mensajes cuyo contenido es HelloWorld y un receptor (consumer) que recibe el mensaje y lo pinta por consola. Este es el [patrón Point-to-Point Channel](http://www.enterpriseintegrationpatterns.com/patterns/messaging/PointToPointChannel.html)i
 
 Para su ejecucion abrimos dos consolas y ejecutamos los siguiente:
 
@@ -59,7 +59,7 @@ java -jar target/rabbitmq-amqp-examples-*.jar --spring.profiles.active=work-queu
 
 ### Ejemplo Publish/Subscribe
 
-Este ejemplo implemente el patrón FanOut tambien conocido como "publish/subscribe" para enviar un mensaje a multiples consumidores. Basicamente los mensajes publicados se transmitiran a todos los receptores.
+Este [ejemplo implemente el patrón FanOut](https://www.rabbitmq.com/tutorials/tutorial-three-spring-amqp.html) tambien conocido como ["publish/subscribe"](http://www.enterpriseintegrationpatterns.com/patterns/messaging/PublishSubscribeChannel.html) para enviar un mensaje a multiples consumidores. Basicamente los mensajes publicados se transmitiran a todos los receptores.
 
 Aunque no lo habiamos comentado hasta ahora, la idea centra del modelo de mensajeria de RabbitMQ es que el productor nunca envia directamente un mensaje a una cola. A menudo el productor ni siquiera sabe si un mensaje sera entregado a un cola, se lo entrega a una Exchange (intercambiador).l
 
@@ -76,7 +76,7 @@ Los Bindings definen la relacion entre un Exchange y una Cola, podriamos definir
 Por otro lado indicar que los Exchange Fanout ignoran el valor de routingKey aunque nosotros lo enviemos. Indicar que si el Exchange no tiene asociadas colas los mensajes se perderan.
 
 Para su ejecucion abrimos dos consolas y ejecutamos los siguiente:
- 
+
 ```
 # shell 1
 java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=pub-sub,receiver --tutorial.client.duration=60000
@@ -87,7 +87,7 @@ java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=pub-sub,sender -
 
 ### Ejemplo Routing
 
-Este ejemplo muestra como enrutar mensajes entre colas mediante la utilización de los Exchanges de tipo Direct.
+Este ejemplo muestra como enrutar mensajes entre colas mediante la utilización de los [Exchanges de tipo Direct](https://www.rabbitmq.com/tutorials/tutorial-four-spring-amqp.html).
   
 Como vimos en el ejemplo anterior un Binding es la relaciones entre un Exchange y una cola. Tambien nombramos el parametro routingKey y que cada tipo de Exchange lo utiliza de diferentes manera (FanOut lo ignora).
   
@@ -109,6 +109,29 @@ java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=routing,receiver
 java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=routing,sender --tutorial.client.duration=60000
 ```
 
+### Ejemplo Topics
+
+Este es un ejemplo de Enrutamiento de mensajes mediante el [Exchange de tipo Topic](https://www.rabbitmq.com/tutorials/tutorial-five-spring-amqp.html). Se define la configuración de la prueba destacando que en este ejemplo se puede verificar el funcionamiento de los Exchanges de tipo Topic.
+ 
+Topic Exchanges proporcionan mayor flexibilidad que los topic Direct que unicamente se basan en el routingKey. Los mensajes enviados a un intercambiador de tipo Topic no pueden tener una clave de enrutamiento arbitraria: debe ser una lista de palabras, delimitada por puntos. Puede ser cualquier palabra, pero generalmente especifican algunas características del mensaje. Algunos ejemplos válidos de claves de enrutamiento: "stock.usd.nyse", "nyse.vmw", "quick.orange.rabbit". Puede haber tantas palabras en la clave de enrutamiento como desee, hasta el límite de 255 bytes.
+
+La lógica detrás de Topic es similar Direct: un mensaje enviado con una clave de enrutamiento particular se entregará a todas las colas que están vinculadas con una clave de enlace coincidente. Sin embargo, hay dos casos especiales para las claves vinculantes: 
+- * (asterisco) puede sustituir exactamente una palabra. 
+- # (almoadilla) puede sustituir a cero o más palabras.
+
+Cuando una cola está enlazada con un bindingKey "#", recibirá todos los mensajes, independientemente de la clave de enrutamiento, como si fuese un FanOut Exchange.
+ 
+Cuando los caracteres especiales "*" y "#" no se utilizan en enlaces, el intercambio de temas se comportará como un Direct Exchange.
+
+Para su ejecucion abrimos dos consolas y ejecutamos los siguiente:
+
+```
+# shell 1
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=topics,receiver --tutorial.client.duration=60000
+
+# shell 2
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=topics,sender --tutorial.client.duration=60000
+```
 
 ## Configuracion
 
