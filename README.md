@@ -116,8 +116,8 @@ Este es un ejemplo de Enrutamiento de mensajes mediante el [Exchange de tipo Top
 Topic Exchanges proporcionan mayor flexibilidad que los topic Direct que unicamente se basan en el routingKey. Los mensajes enviados a un intercambiador de tipo Topic no pueden tener una clave de enrutamiento arbitraria: debe ser una lista de palabras, delimitada por puntos. Puede ser cualquier palabra, pero generalmente especifican algunas características del mensaje. Algunos ejemplos válidos de claves de enrutamiento: "stock.usd.nyse", "nyse.vmw", "quick.orange.rabbit". Puede haber tantas palabras en la clave de enrutamiento como desee, hasta el límite de 255 bytes.
 
 La lógica detrás de Topic es similar Direct: un mensaje enviado con una clave de enrutamiento particular se entregará a todas las colas que están vinculadas con una clave de enlace coincidente. Sin embargo, hay dos casos especiales para las claves vinculantes: 
-- * (asterisco) puede sustituir exactamente una palabra. 
-- # (almoadilla) puede sustituir a cero o más palabras.
+- "*" (asterisco) puede sustituir exactamente una palabra. 
+- "#" (almoadilla) puede sustituir a cero o más palabras.
 
 Cuando una cola está enlazada con un bindingKey "#", recibirá todos los mensajes, independientemente de la clave de enrutamiento, como si fuese un FanOut Exchange.
  
@@ -133,7 +133,73 @@ java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=topics,receiver 
 java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=topics,sender --tutorial.client.duration=60000
 ```
 
-## Configuracion
+### Ejemplo RPC
+
+Ejemplo de implementación del [patrón Request/reply](http://www.enterpriseintegrationpatterns.com/patterns/messaging/RequestReply.html) con RabbitMQ y Spring AMQP. Un sistema RPC tiene un cliente y servidor que se encarga de procesar las peticiones y enviar la confirmación a una cola de CallBack.
+
+RPC es un patrón bastante común pero no siempre es la mejor solución. Debe ser obvio que la función a la que llamamos es local o remota. Es importante documentar bien el sistema y dejar claras las dependencias entre componentes. ¿Comó debe reaccionar el cliente cuando el servidor RPC esta inactivo durante un tiempo prolongado? Si no lo tiene claro, evite RPC. Puede que la mejor solución sea una comunicación asincóna en lugar de un bloqueo RPC.
+
+RPC sobre RabbitMQ es muy sencillo. Un cliente envía un mensaje de solicitud y un servidor responde con un mensaje de respuesta. Para recibir una respuesta, necesitamos enviar una dirección de cola de "callback" con la solicitud. RabbitTemplate maneja la cola de devolución de llamada cuando usamos el método 'convertSendAndReceive ()'. No es necesario realizar ninguna otra configuración al usar RabbitTemplate. [Más Info](https://docs.spring.io/spring-amqp/reference/htmlsingle/#request-reply).
+
+En este caso, Spring-amqp es especialmente util al abstraernos de muchos de los detalles de la implementación del RPC, por ejemplo, normalmente el cliente RPC tendria que crear un cola de callback por cada solicitud RPC. Esto es bastante ineficiente y lo mejor es crear una cola por cliente. Esto nos lleva a otro problema, ¿cada respuesta a que petición corresponde? Aquí es donde entra en acción la propiedad correlationId que se asigna a cada una de las mensajes y que Spring-AMQP gestiona para nosotros tanto en el envío como en la gestión de las respuestas.A
+
+Para su ejecucion abrimos dos consolas y ejecutamos los siguiente:
+
+```
+# shell 1
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=rpc,server --tutorial.client.duration=60000
+
+# shell 2
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=rpc,client --tutorial.client.duration=60000
+```
+
+
+El diseño que se ha visto en este ejemplo no es la unica implementación posible para RPC, pero presenta alguna ventajas:
+
+- Si el servidor RPC es demasiado lento, puede escalar ejecutando otro. Intente ejecutar un segundo RPCServer en una nueva consola.
+- En el lado del cliente, el RPC requiere enviar y recibir solo un mensaje con un método. No se requieren llamadas sincrónicas como queueDeclare. Como resultado, el cliente de RPC solo necesita un viaje de ida y vuelta de red para una única solicitud de RPC.
+
+Nuestro código sigue es muy sencillo y no trata de resolver problemas más complejos (pero importantes), como:
+
+- ¿Cómo debería reaccionar el cliente si no hay servidores en funcionamiento?
+- ¿Debe un cliente tener algún tipo de tiempo de espera para el RPC?
+- Si el servidor no funciona correctamente y genera una excepción, ¿se debe reenviar al cliente?
+- Protección contra mensajes entrantes no válidos (por ejemplo, comprobación de límites) antes del procesamiento.
+
+
+## Configuración
+
+Es conveniente establecer un tiempo de duración a nuestra aplicación a la hora de ejecutar los enviadores y receptores, por defecto es 10000, que esta configurado en application.yml. Para establecerlo esta la propiedad tutorial.client.duration (milisegundos):
+
+```
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=rpc,server --tutorial.client.duration=60000
+```
+
+Si no especificamos donde se encuentra nuestro broker RabbitMQ, Spring AMQP entiende que se encuentra en localhost y el puerto 5672 (por defecto). Si establecemos el perfil remote (--spring.profiles.active=remote), Spring carga las propiedades del fichero application-remote.yml. Para utilizar un instalación remota de RabbitMQ establezca las siguientes propiedades:
+
+```
+spring:
+  rabbitmq:
+    host: <rabbitmq-server>
+    username: <tutorial-user>
+    password: <tutorial-user>
+```
+
+Para hacer las pruebas debe establecer sus propiedades en el fichero application-remote.yml y ejecutar los ejemplos especificando el permite remote. Para más información consulte la documentación de de [Spring Boot](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/) y [Spring AMQP](https://docs.spring.io/spring-amqp/reference/html/). 
+
+
+## Notas
+
+En este apartado he documentado algunos temas que me han parecido interesante conocer y que han aparecido durante el desarrollo de los ejemplos:
+
+### Propiedades de los mensajes
+
+El protocolo AMQP 0-9-1 predefine un conjunto de 14 propiedades que acompañan a un mensaje. La mayoría de las propiedades rara vez se utilizan, con la excepción de las siguientes:
+
+- deliveryMode: marca un mensaje como persistente (con un valor de 2) o transitorio (cualquier otro valor).
+- contentType: se usa para describir el tipo mime de la codificación. Por ejemplo, para la codificación JSON de uso frecuente, es una buena práctica establecer esta propiedad en: application / json.
+- replyTo: comúnmente utilizado para nombrar una cola de devolución de llamada.
+- correlationId: útil para correlacionar las respuestas RPC con las solicitudes.
 
 
 ### Reconocimiento de Mensajes (Message acknowledgment)
@@ -165,7 +231,7 @@ Spring-AMQP establece por defecto valores que establecen la durabilidad de los m
 
 | Property     | default    | Descripcion                                                                                |
 | ------------ | -----------| -------------------------------------------------------------------------------------------|
-| durae        | true       | Establece declareExchange a este valor                                                     |
+| durable        | true       | Establece declareExchange a este valor                                                     |
 | deliveryMode | PERSISTENT |Se puede establecer PERSISENT o NON_PERSISTENT para que RabbitMQ persista o no los mensajes |
 
 [Nota]
