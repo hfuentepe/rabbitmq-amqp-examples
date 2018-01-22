@@ -166,6 +166,26 @@ Nuestro código sigue es muy sencillo y no trata de resolver problemas más comp
 - Si el servidor no funciona correctamente y genera una excepción, ¿se debe reenviar al cliente?
 - Protección contra mensajes entrantes no válidos (por ejemplo, comprobación de límites) antes del procesamiento.
 
+### Ejemplo JSON
+
+En este ejemplo se trata de conseguir los siguientes objetivos:
+
+- Enviar y Recibir mensajes con formato JSON.
+- Enviar y Recibir Objetos Java a traves de RabbitMQ.
+
+Lo especial de este ejemplo es que a vamos a crear un bean de tipo RabbitTemplate y no vamos a utilizar el que crea por defecto SpringBoot. Este RabbitTemplate utilizara un convertidor de mensajes de tipo Jackson2JsonMessageConverter para transformar nuestros objetos a JSON.
+
+En la configuracion del receptor debemos configurar nuestro RabbitListener para que pueda interpretar los mensajes. Para ello creamos un bean de tipo SimpleRabbitListenerContainerFactory en el que establecemos que el convertidor de mensajes es de tipo Jackson2JsonMessageConverter. Este bean lo establecemos como factoria a los RabbitListener del Receiver.
+
+Para su ejecucion abrimos dos consolas y ejecutamos los siguiente:
+
+```
+# shell 1
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=json,receiver --tutorial.client.duration=60000
+
+# shell 2
+java -jar rabbitmq-amqp-examples-*.jar --spring.profiles.active=json,sender --tutorial.client.duration=60000
+```
 
 ## Configuración
 
