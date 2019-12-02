@@ -11,6 +11,24 @@ Es una aplicacion CLI que utiliza perfiles de Spring para controlar el comportam
 Se asume que RabbitMQ esta [instalado](http://rabbitmq.com/download.html) y corriendo en 'localhost' y utilizando el puerto estandar ('5672').
 En caso de que RabbitMQ se encuentre en otra maquina, puerto o credenciales se deberan realizar algunos ajustes que se pueden consultar en la sección Configuracion.
 
+En la raiz del proyecto se encuentra un fichero docker-compose.yml que arranca un contenedor de la imagen rabbitmp donde se configura un virtualhost para el usuario admin con el password admin. Además se monta un directorio /etc/rabbitmq con el fichero enabled_plugins para configurar los plugins de gestión de la interfaz web.
+
+```
+rabbit1:
+  image: "rabbitmq"
+  environment:
+    RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+    RABBITMQ_DEFAULT_USER: "admin"
+    RABBITMQ_DEFAULT_PASS: "admin"
+    RABBITMQ_DEFAULT_VHOST: "/"
+  ports:
+    - "15672:15672"
+    - "5672:5672"
+  volumes:
+    - "./enabled_plugins:/etc/rabbitmq/enabled_plugins"
+```
+
+
 ## Ejecución
 
 Este tutorial utiliza Maven. Para construir ejecute:
